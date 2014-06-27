@@ -1,13 +1,24 @@
 package main
 
 import (
+	"./proxy"
 	"./storage"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"flag"
 	"fmt"
 	goconf "github.com/akrennmair/goconf"
-	// "net/http"
 	"log"
+	"math/big"
+	"net"
+	"net/http"
 	"os"
+	"runtime"
+	"strings"
+	"time"
 )
 
 type test struct {
@@ -22,12 +33,8 @@ func usage() {
 
 func main() {
 
-	// cache := lru.New(300)
-	// cache.Insert("test.fr", "127.0.0.1:8000")
-	// val, ok := cache.Get("test.fr")
-	// fmt.Println(ok, val)
-
-	var cfgfile *string = flag.String("config", "", "configuration file")
+	cfgfile := flag.String("config", "", "configuration file")
+	addr := flag.String("addr", ":8080", "proxy listen address")
 
 	flag.Parse()
 
@@ -36,20 +43,23 @@ func main() {
 	}
 
 	config, err := goconf.ReadConfigFile(*cfgfile)
-
+	threads, err := config.GetInt("default", "thread")
+	if threads > 1 {
+		runtime.GOMAXPROCS(threads)
+	}
 	if err != nil {
 		log.Printf("opening %s failed: %v", *cfgfile, err)
 		os.Exit(1)
 	}
 
 	storage := storage.New(config)
-	// storage.Set("a", "127.0.0.1:8080")
-	storage.Get("a")
-	// log.Printf(config)
-	// hosts_chans := make(map[string]chan *Backend)
-	// backends_chan := make(chan *Backend)
-	// mux := http.NewServeMux()
-	// var request_handler http.Handler = &RequestHandler{Transport: &http.Transport{DisableKeepAlives: false, DisableCompression: false}, HostBackends: hosts_chans, Backends: backends_chan}
-	// mux.Handle("/", request_handler)
-	// srv := &http.Server{Handler: mux, Addr: ":8080"}
+	storage.Delete("localhost:8080")
+	storage.Set("localhost:8080", "game-synergy.fr:80")
+	handler := proxy.New(storage)
+
+	genSelfCert("www.3ko.fr")
+
+	// http.ListenAndServeTLS(*addr2, "cert.pem", "key.pem", handler)
+	http.ListenAndServe(*addr, handler)
+
 }
