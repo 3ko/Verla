@@ -9,7 +9,8 @@ import (
 
 type driver interface {
 	Get(string) (string, bool)
-	Set(string, string)
+	Set(string, string) error
+	Delete(string) error
 }
 
 func driverFactory(config *goconf.ConfigFile) driver {
@@ -44,6 +45,9 @@ func New(config *goconf.ConfigFile) *Storage {
 }
 
 func (c *Storage) Get(key string) (conexionstring string, ok bool) {
+
+	// log.Printf("get addr from %s ", key)
+
 	conexionstring, r := c.lru.Get(key)
 	if r {
 		return conexionstring, true
@@ -54,4 +58,13 @@ func (c *Storage) Get(key string) (conexionstring string, ok bool) {
 		}
 		return conexionstring, r
 	}
+}
+
+func (c *Storage) Set(key string, conexionstring string) {
+	c.driver.Set(key, conexionstring)
+}
+
+func (c *Storage) Delete(key string) {
+	c.lru.Delete(key)
+	c.driver.Delete(key)
 }

@@ -30,7 +30,7 @@ _testmain.go
 *.log
 *.sql
 *.sqlite
-
+*.pem
 .DS_Store
 .DS_Store?
 ._*

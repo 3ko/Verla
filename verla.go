@@ -18,6 +18,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -55,11 +56,21 @@ func main() {
 	storage := storage.New(config)
 	storage.Delete("localhost:8080")
 	storage.Set("localhost:8080", "game-synergy.fr:80")
-	handler := proxy.New(storage)
+	resquest_handler := proxy.New(storage)
 
 	genSelfCert("www.3ko.fr")
 
-	// http.ListenAndServeTLS(*addr2, "cert.pem", "key.pem", handler)
-	http.ListenAndServe(*addr, handler)
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		log.Fatal(http.ListenAndServe(*addr, resquest_handler))
+		wg.Done()
+	}()
 
+	go func() {
+		log.Fatal(http.ListenAndServeTLS(":82", resquest_handler))
+		wg.Done()
+	}()
+
+	wg.Wait()
 }
