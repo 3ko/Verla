@@ -1,0 +1,8 @@
+server(1)
+===================
+
+NAME
+----
+webrocket-server - Start and preconfigure server node instance
+
+SYNOPSIS

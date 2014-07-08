@@ -1,7 +1,0 @@
-[default]
-  host=127.0.0.1
-[storage]
-  driver=memcached
-  user=root
-  password=
-  host=
